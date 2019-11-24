@@ -1,0 +1,202 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+
+<table class="table-bordered">
+    <tr>
+        <td>TIPO DE DOCUMENTO</td>
+        <td>FACTURA: <input type="radio" class="tipoDocumento" name="tipoDocumento" value="Factura" checked/></td>
+        <td>BOLETA : <input type="radio" class="tipoDocumento" name="tipoDocumento" value="Boleta" /></td>
+    </tr>
+    <tr>
+        <td id="idDocumento">RUC CLIENTE:</td>
+        <td id="columnaNumDoc"><input type="text" id="txtNumDoc"/></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>CLIENTE:</td>
+        <td><input type="text" id="txtCliente" /></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TIPO DE AFECTACION:</td>
+        <td>CONIGV: <input type="radio" name="tipoAfectacion" value="CONIGV" checked/></td>
+        <td>SINIGV:<input type="radio" name="tipoAfectacion" value="SINIGV" /></td>
+    </tr>
+    <tr>
+        <td>VENDEDOR:</td>
+        <td><input type="text" id="txtVendedor" list="listademodelos"/><div id="listaVendedor"></div></td>
+        <td></td>
+    </tr>
+</table>
+<button type="button" id="btnProducto" class="btn btn-primary" data-toggle="modal" data-target="#producto">
+    Producto
+</button>
+<table class="table-bordered">
+    <tr>
+        <td>CODIGO</td>
+        <td>PRODUCTO</td>
+        <td>PRECIO</td>
+        <td>CANTIDAD</td>
+        <td>IMPORTE</td>
+    </tr>
+    <tbody id="listaDetalle">
+
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="4">SUBTOTAL</td>
+            <td id="tdTotalBruto">0.00</td>
+        </tr>
+        <tr>
+            <td colspan="4">IGV</td>
+            <td id="tdIgv">0.00</td>
+        </tr>
+        <tr>
+            <td colspan="4">Total</td>
+            <td id="tdTotal">0.00</td>
+        </tr>
+    </tfoot>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="producto" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <table class="table-bordered">
+                    <tr>
+                        <td>CODIGO</td>
+                        <td>PRODUCTO</td>
+                        <td>PRECIO</td>
+                        <td>CANTIDAD</td>
+                        <td>//</td>
+                    </tr>
+                    <tbody id="listaProductos"></tbody>
+ 
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Producto</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section scripts {
+    <script>
+       //EMD.Cliente.buscar();
+        $('#btnAgregar').on('click', function () {
+            var xml = '<Clientes>';
+            $('#lista tr').each(function () {
+                xml += '<Cliente><nombre>' + $(this).find("td").eq(1).html() + '</nombre>' +
+                  '<numero>' + $(this).find("td").eq(2).html() + '</numero>' +
+                  '<activo>' + $(this).find("td").eq(3).html() + '</activo></Cliente>';
+             });
+           xml+= '</Clientes>';
+           EMD.Cliente.insPoducto(xml);
+        });
+
+        $('#txtNumDoc').on('blur', function () {
+            var numero = $(this).val();
+            var tipoDoc=$('input[name=tipoDocumento]:checked').val();
+            $('#txtCliente').val('');
+           
+            if (numero.length == 8 && tipoDoc=='Boleta') {
+                var xml = '<Clientes>';
+
+                xml += '<Cliente>' +
+                        '<numdoc>' + $(this).val() + '</numdoc>' +
+                       '</Cliente>';
+
+                xml += '</Clientes>';
+                EMD.Cliente.buscar(xml);
+            }
+
+            if (numero.length == 11 && tipoDoc == 'Factura') {
+                var xml = '<Clientes>';
+
+                xml += '<Cliente>' +
+                        '<numdoc>' + $(this).val() + '</numdoc>' +
+                       '</Cliente>';
+
+                xml += '</Clientes>';
+                EMD.Cliente.buscar(xml);
+            }
+
+
+
+        });
+        //factura o boleta
+        $(document).on('change','.tipoDocumento', function () {
+            var doc = $(this).val();
+            $('#txtNumDoc').val('');
+            $('#txtCliente').val('');
+            EMD.Cliente.TipoDocumento(doc);
+        });
+
+
+        //vendedor
+        $('#txtVendedor').on('keyup', function () {
+            var vendedor = $(this).val();
+            var xml = '<Vendedores>';
+
+            xml += '<Vendedor>' +
+                    '<nombre>' + $(this).val() + '</nombre>' +
+                   '</Vendedor>';
+
+            xml += '</Vendedores>';
+            EMD.Vendedor.buscar(xml);
+        });
+
+        //lista de producto
+        $('#btnProducto').on('click', function () {
+            var vendedor = $(this).val();
+            var xml = '<Productos>';
+
+            xml += '<Producto>' +
+                    '<descripcion>' + '' + '</descripcion>' +
+                   '</Producto>';
+
+            xml += '</Productos>';
+            EMD.Producto.buscar(xml);
+        });
+
+        $(document).on('click', '.agregarProducto', function () {
+            //var producto = $(this).attr("data-id");
+
+            /*var xml = '<Productos>';
+
+            xml += '<Producto>' +
+                    '<descripcion>' + '' + '</descripcion>' +
+                   '</Producto>';
+
+            xml += '</Productos>';*/
+            EMD.Producto.tabla($(this).attr("data-id"), $(this).attr("data-producto"), $(this).attr("data-precio"));
+            EMD.Producto.calcularTotal();
+        });
+
+        $(document).on('change', '.cantidad', function () {
+            var cantidad = $(this).val();
+            var precio = $(this).attr("data-pre");
+            var codigo = $(this).attr("data-codigo");
+            $('#importe' + codigo).text(parseFloat(precio * cantidad));
+            EMD.Producto.calcularTotal();
+        });
+        
+
+
+        
+    </script>
+
+}
